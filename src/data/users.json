@@ -1,0 +1,22 @@
+[
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "username": "johndoe",
+      "role": "Administrator",
+      "lastLogin": "2024-02-04 15:30",
+      "joinDate": "2024-01-01",
+      "accountType": "Premium"
+    },
+    {
+      "id": 2,
+      "name": "Jane Smith",
+      "email": "jane.smith@example.com",
+      "username": "janesmith",
+      "role": "User",
+      "lastLogin": "2024-02-05 10:15",
+      "joinDate": "2024-01-10",
+      "accountType": "Basic"
+    }
+  ]

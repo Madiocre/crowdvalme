@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    // Disable strict type-checking
+    "strict": false,
+
+    // Alternatively, disable specific strict options
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictFunctionTypes": false,
+    "strictPropertyInitialization": false,
+    "strictBindCallApply": false,
+    "noImplicitThis": false,
+    "alwaysStrict": false,
+
+    // Disable checking for unused locals and parameters
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+
+    // Allow JavaScript-like behavior
+    "allowJs": true,
+    "checkJs": false
+  },
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}

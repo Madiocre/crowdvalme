@@ -1,0 +1,42 @@
+[
+    {
+      "id": 1,
+      "title": "Eco-Friendly Water Bottle",
+      "description": "A sustainable water bottle that's completely biodegradable.",
+      "creator": "Alex Green",
+      "votes": 45,
+      "commentCount": 12,
+      "createdAt": "2024-01-15",
+      "imageUrl": "https://via.placeholder.com/600x400"
+    },
+    {
+      "id": 2,
+      "title": "Local Food Delivery App",
+      "description": "Connect local restaurants directly with customers, cutting out the middleman.",
+      "creator": "Sarah Chen",
+      "votes": 28,
+      "commentCount": 8,
+      "createdAt": "2024-01-20",
+      "imageUrl": "https://via.placeholder.com/600x400"
+    },
+    {
+      "id": 3,
+      "title": "Smart Plant Watering System",
+      "description": "An IoT device that waters your plants automatically based on soil moisture levels.",
+      "creator": "John Doe",
+      "votes": 15,
+      "commentCount": 5,
+      "createdAt": "2024-02-01",
+      "imageUrl": "https://via.placeholder.com/600x400"
+    },
+    {
+      "id": 4,
+      "title": "AI-Powered Language Tutor",
+      "description": "An AI app that helps you learn new languages through personalized lessons.",
+      "creator": "Emily White",
+      "votes": 32,
+      "commentCount": 10,
+      "createdAt": "2024-02-10",
+      "imageUrl": "https://via.placeholder.com/600x400"
+    }
+  ]
