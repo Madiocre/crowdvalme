@@ -159,7 +159,7 @@ export default function DashboardLayout() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div">
-            Dashboard
+            Valme
           </Typography>
         </Toolbar>
       </AppBar>
@@ -171,7 +171,7 @@ export default function DashboardLayout() {
         </DrawerHeader>
         <Divider />
         <List>
-          {sidebarTokens.map((token, index) => (
+          {sidebarTokens.map((token) => (
             <ListItem key={token.text} disablePadding sx={{ display: 'block' }}>
               <ListItemButton
                 onClick={token.onClick}
