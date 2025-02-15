@@ -22,6 +22,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Outlet, useNavigate } from 'react-router-dom';
+import Logo from "../assets/Valme.png"
 
 const drawerWidth = 240;
 
@@ -159,7 +160,7 @@ export default function DashboardLayout() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div">
-            Valme
+            <img src={"../assets/Valme.png"} alt="" />
           </Typography>
         </Toolbar>
       </AppBar>

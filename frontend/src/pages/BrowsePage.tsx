@@ -1,26 +1,63 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PlusCircle, ThumbsUp, MessageCircle, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Typography, Box, Card, CardContent, CardMedia, IconButton } from '@mui/material';
-import ideas from '../data/ideas.json'; // Import ideas from JSON
+import { Idea } from '../../../backend/src/types'; // Adjust path
 
 export default function BrowsePage() {
-  const [projects, setProjects] = useState(ideas);
-  const [userTokens, setUserTokens] = useState(30);
-  const [votedIdeas, setVotedIdeas] = useState<number[]>([]);
+  const [projects, setProjects] = useState<Idea[]>([]);
+  const [userTokens, setUserTokens] = useState(0);
+  const [votedIdeas, setVotedIdeas] = useState<string[]>([]);
   const navigate = useNavigate();
 
-  const handleVote = (projectId: number) => {
-    if (userTokens > 0 && !votedIdeas.includes(projectId)) {
-      setUserTokens(prev => prev - 1);
-      setProjects(prev =>
-        prev.map(p =>
-          p.id === projectId
-            ? { ...p, votes: p.votes + 1 }
-            : p
-        )
-      );
-      setVotedIdeas(prev => [...prev, projectId]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [ideasRes, userRes] = await Promise.all([
+          fetch('/api/ideas'),
+          fetch('/api/user', {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          })
+        ]);
+
+        if (!ideasRes.ok || !userRes.ok) throw new Error('Failed to fetch data');
+        
+        const ideasData = await ideasRes.json();
+        const userData = await userRes.json();
+        
+        setProjects(ideasData);
+        setUserTokens(userData.tokens);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleVote = async (ideaId: string) => {
+    if (userTokens > 0 && !votedIdeas.includes(ideaId)) {
+      try {
+        const response = await fetch(`/api/ideas/${ideaId}/vote`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        if (!response.ok) throw new Error('Failed to submit vote');
+        
+        const result = await response.json();
+        setUserTokens(result.remainingTokens);
+        setProjects(prev => prev.map(p => 
+          p.id === ideaId ? {...p, totalVotes: p.totalVotes + 1} : p
+        ));
+        setVotedIdeas(prev => [...prev, ideaId]);
+      } catch (error) {
+        console.error('Error voting:', error);
+      }
     }
   };
 
@@ -70,7 +107,7 @@ export default function BrowsePage() {
             <CardMedia
               component="img"
               height="200"
-              image={project.imageUrl}
+              image={project.imageUrl || "https://via.placeholder.com/200"}
               alt={project.title}
             />
             <CardContent>
@@ -82,10 +119,10 @@ export default function BrowsePage() {
               </Typography>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  by {project.creator}
+                  by {project.creatorId}
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {project.createdAt}
+                  {new Date(project.createdAt).toLocaleDateString()}
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
@@ -99,7 +136,7 @@ export default function BrowsePage() {
                 >
                   <ThumbsUp />
                   <Typography variant="body2" sx={{ ml: 1 }}>
-                    {project.votes}
+                    {project.totalVotes}
                   </Typography>
                 </IconButton>
                 <IconButton
@@ -111,7 +148,7 @@ export default function BrowsePage() {
                 >
                   <MessageCircle />
                   <Typography variant="body2" sx={{ ml: 1 }}>
-                    {project.commentCount}
+                    {project.commentCount || 0}
                   </Typography>
                 </IconButton>
               </Box>
