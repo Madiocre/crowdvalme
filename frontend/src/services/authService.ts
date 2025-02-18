@@ -1,4 +1,5 @@
-import { User } from 'firebase/auth';
+import { User } from "firebase/auth";
+import { auth } from "../firebase";
 
 export class AuthService {
   private static instance: AuthService;
@@ -32,6 +33,31 @@ export class AuthService {
   async getAuthHeader(): Promise<{ Authorization: string } | undefined> {
     const token = await this.getToken();
     return token ? { Authorization: `Bearer ${token}` } : undefined;
+  }
+
+  async logout() {
+    try {
+      const token = await this.getToken();
+      if (!token) return true;
+
+      // Always attempt Firebase signout first
+      await auth.signOut();
+
+      // Attempt backend logout
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      localStorage.removeItem("token");
+      return true;
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Force cleanup even if backend fails
+      await auth.signOut();
+      localStorage.removeItem("token");
+      throw error;
+    }
   }
 }
 

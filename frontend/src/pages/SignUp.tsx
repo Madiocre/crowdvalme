@@ -11,8 +11,8 @@ import {
 } from "@mui/material";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
-import { auth, db } from "../firebase";
+// import { doc, setDoc } from "firebase/firestore";
+import { auth } from "../firebase";
 import { useState } from "react";
 
 export default function SignUpPage() {
@@ -25,35 +25,25 @@ export default function SignUpPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const idToken = await userCredential.user.getIdToken();
+  
       // Update user profile
-      await updateProfile(userCredential.user, { 
-        displayName: name,
+      await updateProfile(userCredential.user, { displayName: name });
+  
+      // Call backend login endpoint
+      const loginResponse = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ idToken }),
       });
-
-      const now = new Date();
-      // Create user document in Firestore matching our backend structure
-      await setDoc(doc(db, "users", userCredential.user.uid), {
-        uid: userCredential.user.uid,
-        email,
-        displayName: name,
-        photoURL: null,
-        tokens: 10, // Starting tokens
-        lastTokenRefill: now.toISOString(),
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-        ideasSubmitted: 0,
-        totalVotesCast: 0,
-        votesReceivedOnIdeas: 0
-      });
-
-      // After successful signup, navigate to home
-      navigate("/");
+  
+      if (!loginResponse.ok) throw new Error('Login failed');
+  
+      // Redirect to home page
+      navigate('/');
     } catch (error: any) {
       setError(error.message);
     }

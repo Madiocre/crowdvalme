@@ -18,8 +18,15 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 
 // Set up auth state listener
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   authService.setCurrentUser(user);
+  // Sync token with localStorage
+  if (user) {
+    const token = await user.getIdToken();
+    localStorage.setItem('token', token);
+  } else {
+    localStorage.removeItem('token');
+  }
 });
 
 export default app;

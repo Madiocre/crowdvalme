@@ -9,15 +9,18 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "testauth": "npx ts-node src/tests/auth.test.ts",
+    "testfact": "ts-node src/tests/testUtils.ts",
     "dev": "nodemon --exec ts-node src/app.ts",
     "build": "tsc",
     "start": "node dist/app.js"
   },
   "dependencies": {
+    "axios": "^1.7.9",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "firebase-admin": "^13.1.0"
+    "firebase-admin": "^13.1.0",
+    "redis": "^4.7.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

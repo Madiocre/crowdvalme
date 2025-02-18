@@ -1,6 +1,6 @@
-import { User } from '../types';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { adminDb } from '../config/firebaseAdmin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { User } from '../types';
 
 export class TokenManager {
   private static WEEKLY_TOKENS = 10;
@@ -15,15 +15,15 @@ export class TokenManager {
     }
 
     const userData = userDoc.data() as User;
-    const lastRefill = new Date(userData.lastTokenRefill);
-    const now = new Date();
+    const lastRefill = (userData.lastTokenRefill as Timestamp).toDate(); // Convert to Date
+    const now = Timestamp.now(); // Use Firestore timestamp
     
     // Check if a week has passed since last refill
-    if (now.getTime() - lastRefill.getTime() >= this.MILLISECONDS_IN_WEEK) {
+    if (now.toDate().getTime() - lastRefill.getTime() >= this.MILLISECONDS_IN_WEEK) {
       const newTokens = this.WEEKLY_TOKENS;
       await userRef.update({
         tokens: newTokens,
-        lastTokenRefill: now.toISOString()
+        lastTokenRefill: now // Store as Timestamp
       });
       return newTokens;
     }
@@ -47,7 +47,8 @@ export class TokenManager {
 
       transaction.update(userRef, {
         tokens: FieldValue.increment(-1),
-        totalVotesCast: FieldValue.increment(1)
+        totalVotesCast: FieldValue.increment(1),
+        updatedAt: Timestamp.now() // Add timestamp for last update
       });
 
       return true;

@@ -7,66 +7,115 @@ import {
   Avatar,
   Button,
   TextField,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { Edit2, Mail, UserCircle } from "lucide-react";
 import { User } from "../../../backend/src/types"; // Adjust path based on your setup
 import { fetchWithAuth } from "../utils/api";
 import { auth } from "../firebase";
+// import { Timestamp } from "firebase/firestore";
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<User | null>(null);
   const [editedProfile, setEditedProfile] = useState<Partial<User>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await fetchWithAuth('/api/user');
+        setLoading(true);
+        const user = auth.currentUser;
+        if (!user) {
+          setError("Not authenticated");
+          setLoading(false);
+          return;
+        }
         
-        // Additional safety check
-        if (response instanceof Error) throw response;
+        // Get a fresh ID token to ensure it's valid
+        const idToken = await user.getIdToken(true);
+        localStorage.setItem("token", idToken);
         
+        const response = await fetchWithAuth("/api/user");
+        
+        // The response already contains Timestamp objects, so no conversion needed
         setProfile(response);
+        setError(null);
       } catch (error) {
-        console.error('Failed to load profile:', error);
-        // Show user-friendly error message
+        console.error("Failed to load profile:", error);
+        setError("Failed to load profile. Please try signing in again.");
+      } finally {
+        setLoading(false);
       }
     };
-  
+
     // Add auth state listener
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) fetchProfile();
+      else setLoading(false);
     });
-  
+
     return () => unsubscribe();
   }, []);
 
   const handleSave = async () => {
     try {
-      const response = await fetch("/api/user", {
+      setError(null);
+      
+      // Only send fields that actually changed
+      const changedFields: Partial<User> = {};
+      if (editedProfile.displayName !== undefined && 
+          editedProfile.displayName !== profile?.displayName) {
+        changedFields.displayName = editedProfile.displayName;
+      }
+      if (editedProfile.email !== undefined && 
+          editedProfile.email !== profile?.email) {
+        changedFields.email = editedProfile.email;
+      }
+      
+      // If nothing changed, just exit edit mode
+      if (Object.keys(changedFields).length === 0) {
+        setIsEditing(false);
+        return;
+      }
+      
+      const response = await fetchWithAuth("/api/user", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(editedProfile),
+        body: JSON.stringify(changedFields),
       });
-
-      if (!response.ok) throw new Error("Failed to update profile");
-
-      const updatedData = await response.json();
-      setProfile(updatedData);
+      
+      // Response should already have Timestamp objects from the server
+      setProfile(response);
       setIsEditing(false);
+      setEditedProfile({});
+      setSuccessMessage("Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile:", error);
+      setError("Failed to update profile. Please try again.");
     }
   };
 
-  if (!profile) return <Typography>Loading...</Typography>;
+  const handleCancel = () => {
+    setEditedProfile({});
+    setIsEditing(false);
+  };
 
-  function handleCancel(event: MouseEvent<HTMLButtonElement, MouseEvent>): void {
-    throw new Error("Function not implemented.");
-  }
+  const handleCloseSnackbar = () => {
+    setSuccessMessage(null);
+    setError(null);
+  };
+
+  // Helper function to format Timestamp to local date string
+  // const formatTimestamp = (timestamp: Timestamp) => {
+  //   return timestamp.toDate().toLocaleDateString();
+  // };
+
+  if (loading) return <Typography>Loading...</Typography>;
+  if (!profile && error) return <Typography color="error">{error}</Typography>;
+  if (!profile) return <Typography>No profile data available.</Typography>;
 
   return (
     <Box sx={{ flex: 1, p: 3 }}>
@@ -155,7 +204,7 @@ export default function ProfilePage() {
               <Box sx={{ display: "grid", gap: 2 }}>
                 <TextField
                   label="Display Name"
-                  value={editedProfile.displayName || ""}
+                  value={editedProfile.displayName ?? profile.displayName ?? ""}
                   onChange={(e) =>
                     setEditedProfile({
                       ...editedProfile,
@@ -166,7 +215,7 @@ export default function ProfilePage() {
                 <TextField
                   fullWidth
                   label="Email"
-                  value={editedProfile.email || ""}
+                  value={editedProfile.email ?? profile.email ?? ""}
                   onChange={(e) =>
                     setEditedProfile({
                       ...editedProfile,
@@ -217,9 +266,6 @@ export default function ProfilePage() {
                     >
                       Member Since
                     </Typography>
-                    <Typography variant="body1" sx={{ color: "text.primary" }}>
-                      {new Date(profile.createdAt).toLocaleDateString()}
-                    </Typography>
                   </Box>
                 </Box>
                 <Box>
@@ -234,15 +280,28 @@ export default function ProfilePage() {
                   <Typography variant="body2" sx={{ color: "text.secondary" }}>
                     Last Token Refill
                   </Typography>
-                  <Typography variant="body1" sx={{ color: "text.primary" }}>
-                    {new Date(profile.lastTokenRefill).toLocaleDateString()}
-                  </Typography>
                 </Box>
               </Box>
             )}
           </CardContent>
         </Card>
       </Box>
+
+      {/* Success/Error Notifications */}
+      <Snackbar 
+        open={!!successMessage || !!error} 
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={successMessage ? "success" : "error"}
+          sx={{ width: '100%' }}
+        >
+          {successMessage || error}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

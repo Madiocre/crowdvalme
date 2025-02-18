@@ -1,3 +1,4 @@
+// layouts/AppLayout.tsx
 import * as React from "react";
 import { styled, useTheme, Theme, CSSObject } from "@mui/material/styles";
 import Box from "@mui/material/Box";
@@ -6,7 +7,6 @@ import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import List from "@mui/material/List";
 import CssBaseline from "@mui/material/CssBaseline";
-// import Typography from '@mui/material/Typography';
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -18,18 +18,17 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import HomeIcon from "@mui/icons-material/Home";
 import SearchIcon from "@mui/icons-material/Search";
-// import LoginIcon from "@mui/icons-material/Login";
-// import HowToRegIcon from "@mui/icons-material/HowToReg";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import PersonIcon from "@mui/icons-material/Person";
 import LogoutIcon from "@mui/icons-material/Logout";
+import LoginIcon from "@mui/icons-material/Login";
+import HowToRegIcon from "@mui/icons-material/HowToReg";
 import { Outlet, useNavigate } from "react-router-dom";
 import { auth } from "../firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import Logo from "../assets/ValmeLogo.png";
 import { useEffect } from "react";
 import CircularProgress from "@mui/material/CircularProgress";
-
 const drawerWidth = 240;
 
 const openedMixin = (theme: Theme): CSSObject => ({
@@ -113,115 +112,114 @@ const Drawer = styled(MuiDrawer, {
   ],
 }));
 
-export default function DashboardLayout() {
+export default function AppLayout() {
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
   const [user, loading] = useAuthState(auth);
   const navigate = useNavigate();
 
-  const handleDrawerOpen = () => {
-    setOpen(true);
-  };
-
-  const handleDrawerClose = () => {
-    setOpen(false);
-  };
+  const handleDrawerOpen = () => setOpen(true);
+  const handleDrawerClose = () => setOpen(false);
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate("/signin");
+      // Optional: Add any guest mode specific logic
     }
-  }, [user, loading, navigate]);
+  }, [user, loading]);
 
   const handleLogout = async () => {
     try {
       const token = await auth.currentUser?.getIdToken();
 
-      // Backend logout
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // Call backend logout if user is authenticated
+      if (token) {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(console.error); // Catch but continue even if backend call fails
+      }
 
       // Frontend cleanup
       await auth.signOut();
       localStorage.removeItem("token");
-      navigate("/signin");
+      navigate("/home");
     } catch (error) {
       console.error("Logout error:", error);
-      // Force cleanup
+      // Force frontend cleanup
       await auth.signOut();
       localStorage.removeItem("token");
-      navigate("/signin");
+      navigate("/home");
     }
   };
 
-  if (loading)
+  const getNavItems = () => {
+    const baseItems = [
+      { text: "Home", icon: <HomeIcon />, onClick: () => navigate("/") },
+      {
+        text: "Browse",
+        icon: <SearchIcon />,
+        onClick: () => navigate("/browse"),
+      },
+    ];
+
+    if (user) {
+      return [
+        ...baseItems,
+        {
+          text: "Add Idea",
+          icon: <AddCircleOutlineIcon />,
+          onClick: () => navigate("/add-idea"),
+        },
+        {
+          text: "Profile",
+          icon: <PersonIcon />,
+          onClick: () => navigate("/profile"),
+        },
+        { text: "Logout", icon: <LogoutIcon />, onClick: handleLogout },
+      ];
+    }
+
+    return [
+      ...baseItems,
+      {
+        text: "Sign In",
+        icon: <LoginIcon />,
+        onClick: () => navigate("/signin"),
+      },
+      {
+        text: "Register",
+        icon: <HowToRegIcon />,
+        onClick: () => navigate("/signup"),
+      },
+    ];
+  };
+
+  if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
         <CircularProgress />
       </Box>
     );
-
-  const sidebarTokens = [
-    { text: "Home", icon: <HomeIcon />, onClick: () => navigate("/") },
-    {
-      text: "Browse",
-      icon: <SearchIcon />,
-      onClick: () => navigate("/browse"),
-    },
-    user && {
-      text: "Add Idea",
-      icon: <AddCircleOutlineIcon />,
-      onClick: () => navigate("/add-idea"),
-    },
-    user && {
-      text: "Profile",
-      icon: <PersonIcon />,
-      onClick: () => navigate("/profile"),
-    },
-    user && {
-      text: "Logout",
-      icon: <LogoutIcon />,
-      onClick: handleLogout,
-    },
-  ].filter(Boolean) as Array<{
-    text: string;
-    icon: React.JSX.Element;
-    onClick: () => void;
-  }>;
+  }
 
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
-      <AppBar
-        position="fixed"
-        open={open}
-        color="primary"
-        sx={{
-          backgroundColor: (theme) => theme.palette.primary.main,
-        }}
-      >
+      <AppBar position="fixed" open={open} color="primary">
         <Toolbar>
           <IconButton
             color="inherit"
             aria-label="open drawer"
             onClick={handleDrawerOpen}
             edge="start"
-            sx={[
-              {
-                marginRight: 5,
-              },
-              open && { display: "none" },
-            ]}
+            sx={{ marginRight: 5, ...(open && { display: "none" }) }}
           >
             <MenuIcon />
           </IconButton>
-          <Box>
-            <img src={Logo} alt="" />
-          </Box>
+          <img src={Logo} alt="Logo" style={{ height: 40 }} />
         </Toolbar>
       </AppBar>
+
       <Drawer variant="permanent" open={open}>
         <DrawerHeader>
           <IconButton onClick={handleDrawerClose}>
@@ -234,61 +232,38 @@ export default function DashboardLayout() {
         </DrawerHeader>
         <Divider />
         <List>
-          {sidebarTokens.map((token) => (
-            <ListItem key={token.text} disablePadding sx={{ display: "block" }}>
+          {getNavItems().map((item) => (
+            <ListItem key={item.text} disablePadding sx={{ display: "block" }}>
               <ListItemButton
-                onClick={token.onClick}
-                sx={[
-                  {
-                    minHeight: 48,
-                    px: 2.5,
-                  },
-                  open
-                    ? {
-                        justifyContent: "initial",
-                      }
-                    : {
-                        justifyContent: "center",
-                      },
-                ]}
+                onClick={item.onClick}
+                sx={{
+                  minHeight: 48,
+                  justifyContent: open ? "initial" : "center",
+                  px: 2.5,
+                }}
               >
                 <ListItemIcon
-                  sx={[
-                    {
-                      minWidth: 0,
-                      justifyContent: "center",
-                    },
-                    open
-                      ? {
-                          mr: 3,
-                        }
-                      : {
-                          mr: "auto",
-                        },
-                  ]}
+                  sx={{
+                    minWidth: 0,
+                    mr: open ? 3 : "auto",
+                    justifyContent: "center",
+                  }}
                 >
-                  {token.icon}
+                  {item.icon}
                 </ListItemIcon>
                 <ListItemText
-                  primary={token.text}
-                  sx={[
-                    open
-                      ? {
-                          opacity: 1,
-                        }
-                      : {
-                          opacity: 0,
-                        },
-                  ]}
+                  primary={item.text}
+                  sx={{ opacity: open ? 1 : 0 }}
                 />
               </ListItemButton>
             </ListItem>
           ))}
         </List>
       </Drawer>
+
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <DrawerHeader />
-        <Outlet /> {/* Render nested routes here */}
+        <Outlet />
       </Box>
     </Box>
   );
