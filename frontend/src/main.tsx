@@ -1,12 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
-import { JSX, StrictMode } from "react";
+import { JSX } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  BrowserRouter,
-  Navigate,
-  Route,
-  Routes,
-} from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import SignInPage from "./pages/SignIn";
 import SignUpPage from "./pages/SignUp";
@@ -20,19 +15,21 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "./firebase";
 import AuthLayout from "./layouts/AuthLayout";
 import AppLayout from "./layouts/AppLayout";
+import NotFound from "./pages/NotFound";
+import { AuthProvider } from "./context/AuthContext";
 
 // Route guard component for protected routes
 const RequireAuth = ({ children }: { children: JSX.Element }) => {
   const [user, loading] = useAuthState(auth);
-  
+
   if (loading) {
     return <div>Loading...</div>;
   }
-  
+
   if (!user) {
     return <Navigate to="/signin" />;
   }
-  
+
   return children;
 };
 
@@ -44,7 +41,7 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           <Route index element={<Navigate to="/home" />} />
-          
+
           {/* Auth Routes */}
           <Route element={<AuthLayout />}>
             <Route path="/signin" element={<SignInPage />} />
@@ -56,20 +53,27 @@ const App = () => {
             {/* Public routes */}
             <Route path="/home" element={<HomePage />} />
             <Route path="/browse" element={<BrowsePage />} />
-            
+
             {/* Protected routes */}
-            <Route path="/add-idea" element={
-              <RequireAuth>
-                <AddIdeaPage />
-              </RequireAuth>
-            } />
-            <Route path="/profile" element={
-              <RequireAuth>
-                <ProfilePage />
-              </RequireAuth>
-            } />
+            <Route
+              path="/add-idea"
+              element={
+                <RequireAuth>
+                  <AddIdeaPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <RequireAuth>
+                  <ProfilePage />
+                </RequireAuth>
+              }
+            />
             <Route path="/idea/:id" element={<IdeaDetailPage />} />
           </Route>
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
@@ -77,7 +81,7 @@ const App = () => {
 };
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
+  <AuthProvider>
     <App />
-  </StrictMode>
+  </AuthProvider>
 );

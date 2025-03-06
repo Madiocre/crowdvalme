@@ -1,17 +1,19 @@
-import Button from '@mui/material/Button';
-import HomeIcon from '@mui/icons-material/Home';
-import { FC } from 'react';
+import { Typography, Button } from "@mui/material";
+import { Link } from "react-router-dom";
 
-const NotFound: FC = () => {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen w-screen bg-gray-900 text-white">
-        <h1 className="text-6xl font-bold text-red-600">404</h1>
-        <p className="text-xl text-gray-400 mb-4">Page Not Found</p>
-        <Button variant="contained" startIcon={<HomeIcon />} onClick={() => window.location.href = "/"} color="primary">
-          Go Home
-        </Button>
-      </div>
-    );
-};
-
-export default NotFound;
+export default function NotFound() {
+  return (
+    <div style={{ textAlign: 'center', padding: '2rem' }}>
+      <Typography variant="h1">404</Typography>
+      <Typography variant="h5">Page not found</Typography>
+      <Button 
+        component={Link} 
+        to="/" 
+        variant="contained" 
+        sx={{ mt: 3 }}
+      >
+        Return Home
+      </Button>
+    </div>
+  );
+}

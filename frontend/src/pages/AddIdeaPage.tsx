@@ -1,34 +1,40 @@
-import React, { useState } from 'react';
-import { Box, Typography, TextField, Button, styled } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import UploadIcon from '@mui/icons-material/Upload';
+import React, { useState } from "react";
+import { Box, Typography, TextField, Button, styled } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import UploadIcon from "@mui/icons-material/Upload";
+import { useAuth } from "../context/AuthContext";
+import { createIdea } from "../services/ideaService";
 
-// Custom styles for the file upload input
-const VisuallyHiddenInput = styled('input')({
-  clip: 'rect(0 0 0 0)',
-  clipPath: 'inset(50%)',
+const VisuallyHiddenInput = styled("input")({
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
   height: 1,
-  overflow: 'hidden',
-  position: 'absolute',
+  overflow: "hidden",
+  position: "absolute",
   bottom: 0,
   left: 0,
-  whiteSpace: 'nowrap',
+  whiteSpace: "nowrap",
   width: 1,
 });
 
 const AddIdeaPage: React.FC = () => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [image, setImage] = useState<File | null>(null);
-  const [videoUrl, setVideoUrl] = useState('');
-  const [tags, setTags] = useState('');
+  const [videoUrl, setVideoUrl] = useState("");
+  const [tags, setTags] = useState("");
+  const { user } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission (e.g., save the idea)
-    console.log({ title, description, image, videoUrl, tags });
-    navigate('/'); // Redirect to home or another page after submission
+    if (!user) return;
+    try {
+      await createIdea(user.uid, title, description, videoUrl, tags);
+      navigate("/");
+    } catch (error) {
+      console.error("Error creating idea:", error);
+    }
   };
 
   return (
@@ -61,11 +67,7 @@ const AddIdeaPage: React.FC = () => {
           <Typography variant="body1" mb={1}>
             Upload an Image
           </Typography>
-          <Button
-            component="label"
-            variant="outlined"
-            startIcon={<UploadIcon />}
-          >
+          <Button component="label" variant="outlined" startIcon={<UploadIcon />}>
             Upload Image
             <VisuallyHiddenInput
               type="file"
@@ -73,6 +75,9 @@ const AddIdeaPage: React.FC = () => {
               onChange={(e) => setImage(e.target.files?.[0] || null)}
             />
           </Button>
+          <Typography variant="body2" color="text.secondary">
+            (Image upload not implemented yet)
+          </Typography>
         </Box>
         <TextField
           fullWidth
@@ -92,19 +97,11 @@ const AddIdeaPage: React.FC = () => {
           value={tags}
           onChange={(e) => setTags(e.target.value)}
         />
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            sx={{ mr: 2 }}
-          >
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
+          <Button type="submit" variant="contained" color="primary" sx={{ mr: 2 }}>
             Submit
           </Button>
-          <Button
-            variant="outlined"
-            onClick={() => navigate('/')} // Redirect to home or cancel
-          >
+          <Button variant="outlined" onClick={() => navigate("/")}>
             Cancel
           </Button>
         </Box>

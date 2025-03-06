@@ -127,6 +127,8 @@ export default function AppLayout() {
     }
   }, [user, loading]);
 
+  
+
   const handleLogout = async () => {
     try {
       const token = await auth.currentUser?.getIdToken();
